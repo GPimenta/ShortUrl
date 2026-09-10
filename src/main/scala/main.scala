@@ -1,14 +1,26 @@
+import controller.Routes
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.http.scaladsl.Http
+import repository.UrlRepositoryImpl
+import service.UrlShortenerServiceImpl
+
+import scala.collection.concurrent.TrieMap
+import scala.io.StdIn
 
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 @main def main(): Unit = {
-  //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-  // to see how IntelliJ IDEA suggests fixing it.
-  (1 to 5).map(println)
+  implicit val system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "url-shortener-system")
+  implicit val ec = system.executionContext
 
-  for (i <- 1 to 5) {
-    //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-    // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-    println(s"i = $i")
-  }
+  val repository = UrlRepositoryImpl(TrieMap.empty)
+  val service = UrlShortenerServiceImpl(repository)
+  val routes = Routes(service).routes
+
+  val bindingFuture = Http().newServerAt("localhost", 8080).bind(routes)
+
+  println("Server online at http://localhost:8080/\nPress RETURN to stop...")
+  StdIn.readLine()
+  bindingFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())
 }
 

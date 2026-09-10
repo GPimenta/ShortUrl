@@ -25,8 +25,7 @@ case class UrlRepositoryImpl(map: TrieMap[String, ShortUrl], counter: AtomicLong
         case None => Left(NotFound)
       }
     }
-
-
+  
   override def nextId(): Future[Long] =
     Future(counter.incrementAndGet())
 }

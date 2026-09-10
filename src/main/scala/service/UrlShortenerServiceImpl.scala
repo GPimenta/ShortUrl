@@ -13,7 +13,7 @@ case class UrlShortenerServiceImpl(repository: UrlRepository) extends UrlShorten
 
   override def shorten(originalUrl: String) (using ExecutionContext): Future[Either[AppError, ShortUrl]] =
     UrlValidator.validate(originalUrl) match {
-      case Left(error) => Future.successful(Left(error))
+      case Left(invalidUrl) => Future.successful(Left(invalidUrl))
       case Right(url) => for {
         id <- repository.nextId()
         code = UrlCodec.toBase62(id)
